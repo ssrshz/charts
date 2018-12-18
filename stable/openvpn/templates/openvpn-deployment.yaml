@@ -54,6 +54,12 @@ spec:
             {{- end }}
             name: certs
             readOnly: {{ if .Values.openvpn.keystoreSecret }}true{{ else }}false{{ end }}
+        env:
+          - name: SPECIAL_LEVEL_KEY
+            valueFrom:
+              configMapKeyRef:
+                name: config-env
+                key: test
       volumes:
       - name: openvpn
         configMap:
