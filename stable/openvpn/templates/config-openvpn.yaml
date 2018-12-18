@@ -100,7 +100,10 @@ data:
       
       plugin /usr/lib/openvpn-auth-ldap.so "/etc/openvpn/ldap.conf cn=%u" 
       client-cert-not-required
+      # 不需要客户端提供证书
       username-as-common-name
+      # username作为cn
+      client-to-client
 
       user nobody
       group nogroup
