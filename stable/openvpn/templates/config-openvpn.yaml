@@ -75,6 +75,7 @@ data:
         FORMATTED_SEARCH="${FORMATTED_SEARCH}push \"dhcp-option DOMAIN-SEARCH ${DOMAIN}\"\n"
       done
       cp -f /etc/openvpn/setup/openvpn.conf /etc/openvpn/
+      cp -f /etc/openvpn/setup/ldap.conf /etc/openvpn/
       sed 's|OVPN_K8S_SEARCH|'"${FORMATTED_SEARCH}"'|' -i /etc/openvpn/openvpn.conf
       sed 's|OVPN_K8S_DNS|'"${DNS}"'|' -i /etc/openvpn/openvpn.conf
       sed 's|NETWORK|'"${NETWORK}"'|' -i /etc/openvpn/openvpn.conf
@@ -124,3 +125,61 @@ data:
       {{- if .Values.openvpn.conf }}
 {{ indent 6 .Values.openvpn.conf }}
       {{- end -}}
+
+
+  ldap.conf: |-
+    <LDAP>
+    # LDAP server URL
+    # 更改为AD服务器的ip
+    URL     ldap://10.230.5.50
+    # Bind DN (If your LDAP server doesn't support anonymous binds)
+    # BindDN        uid=Manager,ou=People,dc=example,dc=com
+    # 更改为域管理的dn,可以通过ldapsearch进行查询,-h的ip替换为服务器ip，-d换为管理员的dn，-b为基础的查询dn，*为所有
+    #ldapsearch -LLL -x -h 172.16.76.238 -D "administrator@xx.com" -W -b "dc=xx,dc=com" "*"
+    BindDN      DC=RFDOA,DC=CN
+    # Bind Password
+    # Password  SecretPassword
+    #域管理员的密码
+    Password    123
+    # Network timeout (in seconds)
+    Timeout     15
+    # Enable Start TLS
+    TLSEnable   no
+    # Follow LDAP Referrals (anonymously)
+    #FollowReferrals yes
+    # TLS CA Certificate File
+    #TLSCACertFile  ca.crt
+    # TLS CA Certificate Directory
+    #TLSCACertDir   /etc/ssl/certs
+    # Client Certificate and key
+    # If TLS client authentication is required
+    #TLSCertFile    /usr/local/etc/ssl/client-cert.pem
+    #TLSKeyFile /usr/local/etc/ssl/client-key.pem
+    # Cipher Suite
+    # The defaults are usually fine here
+    # TLSCipherSuite    ALL:!ADH:@STRENGTH
+    </LDAP>
+    <Authorization>
+    # Base DN
+    # 查询认证的基础dn
+    BaseDN      "DC=RFDOA,DC=CN"
+    # User Search Filter
+    #SearchFilter   "(&(uid=%u)(accountStatus=active))"
+    # 其中sAMAccountName=%u的意思是把sAMAccountName的字段取值为用户名，后面“memberof=CN=myvpn,DC=xx,DC=com”指向要认证的vpn用户组，这样任何用户使用vpn，只要加入这个组就好了
+    #SearchFilter    "(&(sAMAccountName=%u)(memberof=CN=myvpn,OU=IXMSOFTLDAP,DC=ixmsoft,DC=com)"
+    SearchFilter    "(&(sAMAccountName=%u))"
+    # Require Group Membership
+    RequireGroup    false
+    # Add non-group members to a PF table (disabled)
+    #PFTable    ips_vpn_users
+    <Group>
+        #BaseDN     "ou=Groups,dc=example,dc=com"
+        #SearchFilter   "(|(cn=developers)(cn=artists))"
+        #MemberAttribute    uniqueMember
+        # Add group members to a PF table (disabled)
+        #PFTable    ips_vpn_eng
+        BaseDN      "OU=Security_Groups,DC=RFDOA,DC=CN"
+        SearchFilter    "(|(CN=Office_vpn_list))"
+        MemberAttribute     "member"
+    </Group>
+    </Authorization>
