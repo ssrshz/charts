@@ -35,7 +35,7 @@ resources:
     cpu: 300m
     memory: 128Mi
 persistence:
-  enabled: true
+  enabled: false
   # subPath: openvpn
   ## A manually managed Persistent Volume and Claim
   ## Requires persistence.enabled: true
